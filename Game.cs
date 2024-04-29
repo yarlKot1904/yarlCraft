@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using StbImageSharp;
+
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -16,19 +13,39 @@ namespace yarlCraft
     {
         //temp
         float[] verties = {
-             0f, 0.5f, 0f, // top vertex
-            -0.5f, -0.5f, 0f, // bottom left
-            0.5f, -0.5f, 0f // bottom right
+            -0.5f, 0.5f, 0f, // top left vertex
+             0.5f, 0.5f, 0f, // top right vertex
+            0.5f, -0.5f, 0f, // bottom right 
+            -0.5f, -0.5f, 0f // bottom left
+        };
+
+        uint[] indexes =
+        {
+            0, 1, 2, // top triagle
+            2, 3, 0 //bot triangle
+        };
+
+        float[] textureCoords =
+        {
+            0f, 1f,
+            1f, 1f,
+            1f, 0f,
+            0f, 0f
         };
 
         int vao;
+        int vbo;
+        int ebo;
         int shaderProgram;
 
 
-        
+        int textureID;
+        private int textureVbo;
+
+
+
         private int width;
         private int height;
-
 
         public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
@@ -53,20 +70,41 @@ namespace yarlCraft
             base.OnLoad();
 
             vao = GL.GenVertexArray();
-            int vbo = GL.GenBuffer();
+            GL.BindVertexArray(vao);
+
+
+            vbo = GL.GenBuffer();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
             GL.BufferData(BufferTarget.ArrayBuffer, verties.Length * sizeof(float), verties, BufferUsageHint.StaticDraw);
-
-            GL.BindVertexArray(vao);
-
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexArrayAttrib(vao, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+
+            //texture vbo
+            textureVbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, textureVbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, textureCoords.Length * sizeof(float), textureCoords, BufferUsageHint.StaticDraw);
+
+
+
+            
+
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexArrayAttrib(vao, 1);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
 
+
+            ebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indexes.Length * sizeof(uint), indexes, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
 
             //shader
             shaderProgram = GL.CreateProgram();
@@ -88,6 +126,27 @@ namespace yarlCraft
 
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
+
+            //textures
+            textureID = GL.GenTexture();
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, textureID);
+
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+            // load image
+            StbImage.stbi_set_flip_vertically_on_load(1);
+            ImageResult dirtTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/default_dirt.png"), ColorComponents.RedGreenBlueAlpha);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, dirtTexture.Width, dirtTexture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, dirtTexture.Data);
+            // unbind the texture
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
         }
 
         protected override void OnUnload()
@@ -95,6 +154,9 @@ namespace yarlCraft
             base.OnUnload();
 
             GL.DeleteVertexArray(vao);
+            GL.DeleteBuffer(ebo);
+            GL.DeleteBuffer(vbo);
+            GL.DeleteTexture(textureID);
             GL.DeleteProgram(shaderProgram);
         }
 
@@ -104,8 +166,14 @@ namespace yarlCraft
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
             GL.UseProgram(shaderProgram);
+
+            GL.BindTexture(TextureTarget.Texture2D, textureID);
+
             GL.BindVertexArray(vao);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            GL.DrawElements(PrimitiveType.Triangles, indexes.Length, DrawElementsType.UnsignedInt, 0);
+
+            //GL.DrawArrays(PrimitiveType.Triangles, 0, 4);
 
             Context.SwapBuffers();
 
