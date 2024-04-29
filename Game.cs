@@ -1,4 +1,4 @@
-﻿using StbImageSharp;
+using StbImageSharp;
 
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
