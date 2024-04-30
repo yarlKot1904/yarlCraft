@@ -12,20 +12,106 @@ namespace yarlCraft
     internal class Game : GameWindow
     {
         //temp
-        float[] verties = {
+        float[] _verties = {
             -0.5f, 0.5f, 0f, // top left vertex
              0.5f, 0.5f, 0f, // top right vertex
             0.5f, -0.5f, 0f, // bottom right 
             -0.5f, -0.5f, 0f // bottom left
         };
 
-        uint[] indexes =
+        List<Vector3> verties = new List<Vector3>()
         {
-            0, 1, 2, // top triagle
-            2, 3, 0 //bot triangle
+            // front face
+            new Vector3(-0.5f, 0.5f, 0.5f), // topleft vert
+            new Vector3(0.5f, 0.5f, 0.5f), // topright vert
+            new Vector3(0.5f, -0.5f, 0.5f), // bottomright vert
+            new Vector3(-0.5f, -0.5f, 0.5f), // bottomleft vert
+            // right face
+            new Vector3(0.5f, 0.5f, 0.5f), // topleft vert
+            new Vector3(0.5f, 0.5f, -0.5f), // topright vert
+            new Vector3(0.5f, -0.5f, -0.5f), // bottomright vert
+            new Vector3(0.5f, -0.5f, 0.5f), // bottomleft vert
+            // back face
+            new Vector3(0.5f, 0.5f, -0.5f), // topleft vert
+            new Vector3(-0.5f, 0.5f, -0.5f), // topright vert
+            new Vector3(-0.5f, -0.5f, -0.5f), // bottomright vert
+            new Vector3(0.5f, -0.5f, -0.5f), // bottomleft vert
+            // left face
+            new Vector3(-0.5f, 0.5f, -0.5f), // topleft vert
+            new Vector3(-0.5f, 0.5f, 0.5f), // topright vert
+            new Vector3(-0.5f, -0.5f, 0.5f), // bottomright vert
+            new Vector3(-0.5f, -0.5f, -0.5f), // bottomleft vert
+            // top face
+            new Vector3(-0.5f, 0.5f, -0.5f), // topleft vert
+            new Vector3(0.5f, 0.5f, -0.5f), // topright vert
+            new Vector3(0.5f, 0.5f, 0.5f), // bottomright vert
+            new Vector3(-0.5f, 0.5f, 0.5f), // bottomleft vert
+            // bottom face
+            new Vector3(-0.5f, -0.5f, 0.5f), // topleft vert
+            new Vector3(0.5f, -0.5f, 0.5f), // topright vert
+            new Vector3(0.5f, -0.5f, -0.5f), // bottomright vert
+            new Vector3(-0.5f, -0.5f, -0.5f), // bottomleft vert
+
         };
 
-        float[] textureCoords =
+        List<Vector2> textureCoords = new List<Vector2>()
+        {
+            new Vector2(0f, 1f),
+            new Vector2 (1f, 1f),
+            new Vector2 (1f, 0f),
+            new Vector2 (0f, 0f),
+
+            new Vector2(0f, 1f),
+            new Vector2 (1f, 1f),
+            new Vector2 (1f, 0f),
+            new Vector2 (0f, 0f),
+
+            new Vector2(0f, 1f),
+            new Vector2 (1f, 1f),
+            new Vector2 (1f, 0f),
+            new Vector2 (0f, 0f),
+
+            new Vector2(0f, 1f),
+            new Vector2 (1f, 1f),
+            new Vector2 (1f, 0f),
+            new Vector2 (0f, 0f),
+
+            new Vector2(0f, 1f),
+            new Vector2 (1f, 1f),
+            new Vector2 (1f, 0f),
+            new Vector2 (0f, 0f),
+
+            new Vector2(0f, 1f),
+            new Vector2 (1f, 1f),
+            new Vector2 (1f, 0f),
+            new Vector2 (0f, 0f)
+        };
+
+        uint[] indexes =
+        {
+            // first face
+            // top triangle
+            0, 1, 2,
+            // bottom triangle
+            2, 3, 0,
+
+            4, 5, 6,
+            6, 7, 4,
+
+            8, 9, 10,
+            10, 11, 8,
+
+            12, 13, 14,
+            14, 15, 12,
+
+            16, 17, 18,
+            18, 19, 16,
+
+            20, 21, 22,
+            22, 23, 20
+        };
+
+        float[] _textureCoords =
         {
             0f, 1f,
             1f, 1f,
@@ -42,6 +128,8 @@ namespace yarlCraft
         int textureID;
         private int textureVbo;
 
+        float yRot = 0f;
+        float zRot = 0f;
 
 
         private int width;
@@ -60,7 +148,7 @@ namespace yarlCraft
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-            GL.Viewport(0,0, e.Width, e.Height);
+            GL.Viewport(0, 0, e.Width, e.Height);
             this.width = e.Width;
             this.height = e.Height;
         }
@@ -76,7 +164,7 @@ namespace yarlCraft
             vbo = GL.GenBuffer();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, verties.Length * sizeof(float), verties, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, verties.Count * Vector3.SizeInBytes, verties.ToArray(), BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexArrayAttrib(vao, 0);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -85,11 +173,11 @@ namespace yarlCraft
             //texture vbo
             textureVbo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, textureVbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, textureCoords.Length * sizeof(float), textureCoords, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, textureCoords.Count * Vector2.SizeInBytes, textureCoords.ToArray(), BufferUsageHint.StaticDraw);
 
 
 
-            
+
 
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexArrayAttrib(vao, 1);
@@ -119,7 +207,7 @@ namespace yarlCraft
             GL.CompileShader(fragmentShader);
 
 
-            GL.AttachShader(shaderProgram, vertexShader); 
+            GL.AttachShader(shaderProgram, vertexShader);
             GL.AttachShader(shaderProgram, fragmentShader);
 
             GL.LinkProgram(shaderProgram);
@@ -147,6 +235,8 @@ namespace yarlCraft
             // unbind the texture
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
+            GL.Enable(EnableCap.DepthTest);
+
         }
 
         protected override void OnUnload()
@@ -163,14 +253,38 @@ namespace yarlCraft
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             GL.ClearColor(0.6f, 0.3f, 1f, 1f);
-            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.UseProgram(shaderProgram);
 
-            GL.BindTexture(TextureTarget.Texture2D, textureID);
 
             GL.BindVertexArray(vao);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            GL.BindTexture(TextureTarget.Texture2D, textureID);
+
+            //transform
+            Matrix4 model = Matrix4.CreateRotationY(yRot);
+            model *= Matrix4.CreateRotationZ(zRot);
+            yRot += 0.001f;
+            zRot += 0.0005f;
+
+            Matrix4 translation = Matrix4.CreateTranslation(0f, 0f, -3f);
+
+            model *= translation;
+
+
+            Matrix4 view = Matrix4.Identity;
+            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60.0f), width / height, 0.1f, 100.0f);
+
+
+            int modelLocation = GL.GetUniformLocation(shaderProgram, "model");
+            int viewLocation = GL.GetUniformLocation(shaderProgram, "view");
+            int projectionLocation = GL.GetUniformLocation(shaderProgram, "projection");
+
+            GL.UniformMatrix4(modelLocation, true, ref model);
+            GL.UniformMatrix4(viewLocation, true, ref view);
+            GL.UniformMatrix4(projectionLocation, true, ref projection);
+
             GL.DrawElements(PrimitiveType.Triangles, indexes.Length, DrawElementsType.UnsignedInt, 0);
 
             //GL.DrawArrays(PrimitiveType.Triangles, 0, 4);
