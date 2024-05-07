@@ -5,7 +5,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-
+using yarlCraft.Cameras;
 
 namespace yarlCraft
 {
@@ -131,6 +131,9 @@ namespace yarlCraft
         float yRot = 0f;
         float zRot = 0f;
 
+        //Camera
+        Camera camera;
+
 
         private int width;
         private int height;
@@ -237,6 +240,8 @@ namespace yarlCraft
 
             GL.Enable(EnableCap.DepthTest);
 
+            camera = new Camera(width, height, Vector3.Zero);
+            CursorState = CursorState.Grabbed;
         }
 
         protected override void OnUnload()
@@ -273,8 +278,8 @@ namespace yarlCraft
             model *= translation;
 
 
-            Matrix4 view = Matrix4.Identity;
-            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60.0f), width / height, 0.1f, 100.0f);
+            Matrix4 view = camera.GetViewMatrix();
+            Matrix4 projection = camera.GetProjectionMatrix();
 
 
             int modelLocation = GL.GetUniformLocation(shaderProgram, "model");
@@ -296,7 +301,11 @@ namespace yarlCraft
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
+            MouseState mouse = MouseState;
+            KeyboardState keyboard = KeyboardState;
+
             base.OnUpdateFrame(args);
+            camera.Update(keyboard, mouse, args);
         }
 
 
